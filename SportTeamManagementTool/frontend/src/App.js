@@ -8,6 +8,7 @@ import TeamDetails from './pages/TeamDetails';
 import PublicationDetails from './pages/PublicationDetails';
 import Navbar from "./components/Navbar";
 import News from './pages/News';
+import Schedule from './pages/Schedule';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/Login" element={<Login />} />
         <Route path="/" element={<Dashboard />} />
           <Route path="/news" element={<News />} />
+          <Route path="/schedule" element={<Schedule />} />
         <Route path="/publications/newpublication" element={<NewPublication />} />
           <Route path="/games/newgame" element={<NewGame />} />
            <Route path="/teams/:id" element={<TeamDetails />} />
