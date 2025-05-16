@@ -7,6 +7,7 @@ import NewTraining from './pages/NewTraining';
 import TeamDetails from './pages/TeamDetails';
 import PublicationDetails from './pages/PublicationDetails';
 import Navbar from "./components/Navbar";
+import News from './pages/News';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
       <Routes>
         <Route path="/Login" element={<Login />} />
         <Route path="/" element={<Dashboard />} />
+          <Route path="/news" element={<News />} />
         <Route path="/publications/newpublication" element={<NewPublication />} />
           <Route path="/games/newgame" element={<NewGame />} />
            <Route path="/teams/:id" element={<TeamDetails />} />

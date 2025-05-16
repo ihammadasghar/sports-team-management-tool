@@ -26,6 +26,7 @@ function Navbar() {
           SportsTeam
         </Link>
         <Link to="/" className="navbar-link">Menu</Link>
+        <Link to="/news" className="navbar-link">Notícias</Link>
 
         {/* Links que precisam do userId */}
         {userId && (
