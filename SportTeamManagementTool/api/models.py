@@ -1,14 +1,5 @@
-from django.contrib.auth.models import User, Group  # Adicionei Group aqui
+from django.contrib.auth.models import User
 from django.db import models
-
-class Athlete(User):
-    birth_date = models.DateField()
-    profile_picture = models.ImageField(upload_to='athletes/', null=True, blank=True)
-    height = models.IntegerField()
-
-    def __str__(self):
-        return f"Athlete: {self.username}"
-
 
 class Trainer(User):
     specialization = models.CharField(max_length=100, blank=True)
@@ -25,25 +16,29 @@ class Member(User):
     def __str__(self):
         return f"Member: {self.username}"
 
-
 class Team(models.Model):
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=500)
     logo = models.ImageField(upload_to='teams/', null=True, blank=True)
     members = models.ManyToManyField(Member, through='Membership')
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"Team: {self.name}"
 
+class Athlete(User):
+    birth_date = models.DateField()
+    profile_picture = models.ImageField(upload_to='athletes/', null=True, blank=True)
+    height = models.IntegerField()
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Athlete: {self.username}"
 
 class Membership(models.Model):
     member = models.ForeignKey(Member, on_delete=models.CASCADE)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)  # Mudei de 'group' para 'team'
+    group = models.ForeignKey(Team, on_delete=models.CASCADE)
     date_joined = models.DateField()
-
-    class Meta:
-        verbose_name_plural = "Memberships"
-
 
 class Publication(models.Model):
     title = models.CharField(max_length=150)
@@ -55,16 +50,11 @@ class Publication(models.Model):
     def __str__(self):
         return self.title
 
-
 class MemberComment(models.Model):
     text = models.CharField(max_length=500)
-    author = models.ForeignKey(Member, on_delete=models.CASCADE)  # Corrigi 'member' para 'Member'
+    author = models.ForeignKey(Member, on_delete=models.CASCADE)
     date_published = models.DateField()
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
-
-    class Meta:
-        verbose_name_plural = "Member Comments"
-
 
 class AthleteComment(models.Model):
     text = models.CharField(max_length=500)
@@ -72,21 +62,13 @@ class AthleteComment(models.Model):
     date_published = models.DateField()
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
 
-    class Meta:
-        verbose_name_plural = "Athlete Comments"
-
-
-class TrainerComment(models.Model):  # Corrigi 'model' para 'Model'
+class TrainerComment(models.Model):
     text = models.CharField(max_length=500)
     author = models.ForeignKey(Trainer, on_delete=models.CASCADE)
     date_published = models.DateField()
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
 
-    class Meta:
-        verbose_name_plural = "Trainer Comments"
-
-
-class Event(models.Model):  # Corrigi 'model' para 'Model'
+class Event(models.Model):
     title = models.CharField(max_length=150)
     description = models.CharField(max_length=500)
     created_by = models.ForeignKey(Trainer, on_delete=models.CASCADE)
@@ -96,21 +78,15 @@ class Event(models.Model):  # Corrigi 'model' para 'Model'
     def __str__(self):
         return self.title
 
-
 class Training(Event):
     attendance = models.ManyToManyField(Athlete, through='TrainingAttendance')
 
     def __str__(self):
         return self.title
 
-
-class TrainingAttendance(models.Model):  # Corrigi 'model' para 'Model'
+class TrainingAttendance(models.Model):
     athlete = models.ForeignKey(Athlete, on_delete=models.CASCADE)
     training = models.ForeignKey(Training, on_delete=models.CASCADE)
-
-    class Meta:
-        verbose_name_plural = "Training Attendances"
-
 
 class Game(Event):
     opponent = models.CharField(max_length=100)
@@ -120,18 +96,10 @@ class Game(Event):
     def __str__(self):
         return self.title
 
-
-class GameAttendance(models.Model):  # Corrigi 'model' para 'Model'
+class GameAttendance(models.Model):
     member = models.ForeignKey(Member, on_delete=models.CASCADE)
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
 
-    class Meta:
-        verbose_name_plural = "Game Attendances"
-
-
-class GameParticipation(models.Model):  # Corrigi 'model' para 'Model'
+class GameParticipation(models.Model):
     athlete = models.ForeignKey(Athlete, on_delete=models.CASCADE)
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
-
-    class Meta:
-        verbose_name_plural = "Game Participations"
