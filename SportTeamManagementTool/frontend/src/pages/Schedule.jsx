@@ -15,29 +15,27 @@ function Schedule() {
     const headers = { Authorization: `Bearer ${token}` };
 
     Promise.all([
-      axios.get(`http://localhost:8000/teams/${teamId}/trainings`, { headers }),
-      axios.get(`http://localhost:8000/teams/${teamId}/games`, { headers })
+      axios.get(`http://127.0.0.1:8000/api/teams/${teamId}/trainings`, { headers }),
+      axios.get(`http://127.0.0.1:8000/api/teams/${teamId}/games`, { headers })
     ])
-    .then(([resTrainings, resGames]) => {
-      const allEvents = [
-        ...resTrainings.data.map(e => ({ ...e, type: "Treino" })),
-        ...resGames.data.map(e => ({ ...e, type: "Jogo" })),
-      ];
-
-      setEvents(allEvents);
-    })
-    .catch(() => setError("Erro ao carregar os horários."));
+      .then(([resTrainings, resGames]) => {
+        const allEvents = [
+          ...resTrainings.data.map(e => ({ ...e, type: "Treino" })),
+          ...resGames.data.map(e => ({ ...e, type: "Jogo" })),
+        ];
+        setEvents(allEvents);
+      })
+      .catch(() => setError("Erro ao carregar os horários."));
   }, [teamId, token]);
 
   const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-  const horas = Array.from({ length: 14 }, (_, i) => i + 8); // 08h até 21h
+  const horas = Array.from({ length: 14 }, (_, i) => i + 8);
 
-  const getEventsForCell = (dia, hora) => {
-    return events.filter(event => {
+  const getEventsForCell = (dia, hora) =>
+    events.filter(event => {
       const d = new Date(event.datetime);
       return d.getDay() === dia && d.getHours() === hora;
     });
-  };
 
   return (
     <div className="schedule-grid-container">
@@ -46,9 +44,7 @@ function Schedule() {
 
       <div className="schedule-grid">
         <div className="grid-header empty"></div>
-        {diasSemana.map((dia, i) => (
-          <div key={i} className="grid-header">{dia}</div>
-        ))}
+        {diasSemana.map((dia, i) => <div key={i} className="grid-header">{dia}</div>)}
 
         {horas.map((hora, rowIndex) => (
           <>
@@ -56,13 +52,8 @@ function Schedule() {
             {diasSemana.map((_, colIndex) => (
               <div key={`cell-${rowIndex}-${colIndex}`} className="grid-cell">
                 {getEventsForCell(colIndex, hora).map(event => (
-                  <div
-                    key={event.id}
-                    className={`grid-event ${event.type === "Jogo" ? "game" : "training"}`}
-                  >
-                    <strong>{event.title}</strong>
-                    <br />
-                    {event.type}
+                  <div key={event.id} className={`grid-event ${event.type === "Jogo" ? "game" : "training"}`}>
+                    <strong>{event.title}</strong><br />{event.type}
                   </div>
                 ))}
               </div>

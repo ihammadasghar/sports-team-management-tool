@@ -17,7 +17,7 @@ function Dashboard() {
       return;
     }
 
-    axios.get("http://localhost:8000/teams/", {
+    axios.get("http://127.0.0.1:8000/api/teams/", {
       headers: {
         Authorization: `Bearer ${token}`,
       },

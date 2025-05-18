@@ -26,7 +26,7 @@ function NewPublication() {
         formData.append("image", imageFile);
       }
 
-      await axios.post("http://localhost:8000/publications/", formData, {
+      await axios.post("http://127.0.0.1:8000/api/publications/", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",

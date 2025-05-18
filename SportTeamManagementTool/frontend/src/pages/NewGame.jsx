@@ -8,7 +8,6 @@ function NewGame() {
   const [description, setDescription] = useState("");
   const [opponent, setOpponent] = useState("");
   const [datetime, setDatetime] = useState("");
-  const [teamId, setTeamId] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -16,11 +15,17 @@ function NewGame() {
     e.preventDefault();
     setError("");
 
-    try {
-      const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem("accessToken");
+    const teamId = localStorage.getItem("teamId");
 
+    if (!token || !teamId) {
+      setError("Token de acesso ou ID da equipa não encontrado.");
+      return;
+    }
+
+    try {
       await axios.post(
-        `http://localhost:8000/teams/${teamId}/games/`,
+        `http://127.0.0.1:8000/api/teams/${teamId}/games/`,
         {
           title,
           description,
@@ -30,6 +35,7 @@ function NewGame() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         }
       );
@@ -83,16 +89,6 @@ function NewGame() {
             type="datetime-local"
             value={datetime}
             onChange={(e) => setDatetime(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>ID da Equipa:</label>
-          <input
-            type="number"
-            value={teamId}
-            onChange={(e) => setTeamId(e.target.value)}
             required
           />
         </div>

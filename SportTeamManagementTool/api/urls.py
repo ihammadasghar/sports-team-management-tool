@@ -19,6 +19,8 @@ urlpatterns = [
     path('publications/<int:pk>/', views.PublicationDetail.as_view()),
     path('publications/<int:pk>/comments/', views.PublicationCommentList.as_view()),
     path('comments/', views.CommentCreate.as_view()),
+    path("me/", views.UserMeView.as_view()),  # novo endpoint
+
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

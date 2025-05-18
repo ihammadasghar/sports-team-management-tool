@@ -4,52 +4,41 @@ import { useParams } from "react-router-dom";
 import './PublicationDetails.css';
 
 function PublicationDetails() {
-  const { id } = useParams(); // id da publicação
+  const { id } = useParams();
   const [publication, setPublication] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-
   const token = localStorage.getItem("accessToken");
 
   useEffect(() => {
     if (!token) return;
 
-    setLoading(true);
-    axios.get(`http://localhost:8000/publications/${id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    .then(res => {
-      setPublication(res.data);
-      setLoading(false);
-    })
-    .catch(() => {
-      setError("Erro ao carregar publicação.");
-      setLoading(false);
-    });
+    const headers = { Authorization: `Bearer ${token}` };
 
-    axios.get(`http://localhost:8000/publications/${id}/comments`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    .then(res => setComments(res.data))
-    .catch(() => setError("Erro ao carregar comentários."));
+    axios.get(`http://127.0.0.1:8000/api/publications/${id}`, { headers })
+      .then(res => setPublication(res.data))
+      .catch(() => setError("Erro ao carregar publicação"))
+      .finally(() => setLoading(false));
+
+    axios.get(`http://127.0.0.1:8000/api/publications/${id}/comments`, { headers })
+      .then(res => setComments(res.data))
+      .catch(() => setError("Erro ao carregar comentários"));
   }, [id, token]);
 
   const handleAddComment = async (e) => {
     e.preventDefault();
-    setError("");
-
     if (!newComment.trim()) return;
 
     try {
-      await axios.post(`http://localhost:8000/publications/${id}/comments`, 
+      await axios.post(
+        `http://127.0.0.1:8000/api/publications/${id}/comments`,
         { text: newComment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Atualizar lista de comentários
-      const res = await axios.get(`http://localhost:8000/publications/${id}/comments`, {
+      const res = await axios.get(`http://127.0.0.1:8000/api/publications/${id}/comments`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setComments(res.data);
@@ -60,7 +49,6 @@ function PublicationDetails() {
   };
 
   if (loading) return <p>Carregando...</p>;
-
   if (!publication) return <p>Publicação não encontrada.</p>;
 
   return (

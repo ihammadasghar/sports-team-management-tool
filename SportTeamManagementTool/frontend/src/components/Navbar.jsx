@@ -6,12 +6,16 @@ function Navbar() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [userId, setUserId] = useState(null);
+  const [role, setRole] = useState("");
 
   useEffect(() => {
     const user = localStorage.getItem("username");
     const id = localStorage.getItem("userId");
+    const role = localStorage.getItem("role");
+
     if (user) setUsername(user);
     if (id) setUserId(id);
+    if (role) setRole(role);
   }, []);
 
   const handleLogout = () => {
@@ -22,29 +26,48 @@ function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        <Link to="/" className="navbar-logo">
-          SportsTeam
-        </Link>
+        <Link to="/" className="navbar-logo">SportsTeam</Link>
         <Link to="/" className="navbar-link">Menu</Link>
         <Link to="/news" className="navbar-link">Notícias</Link>
         <Link to="/schedule" className="navbar-link">Horários</Link>
 
-        {/* Links que precisam do userId */}
         {userId && (
           <>
             <Link to={`/teams/${userId}`} className="navbar-link">Minhas Equipas</Link>
-            <Link to={`/publications/${userId}`} className="navbar-link">Publicações</Link>
-            <Link to={`/games/${userId}`} className="navbar-link">Jogos</Link>
-            <Link to={`/trainings/${userId}`} className="navbar-link">Treinos</Link>
+
+            {role === "trainer" && (
+              <>
+                <Link to={`/trainings/${userId}`} className="navbar-link">Treinos</Link>
+                <Link to={`/games/${userId}`} className="navbar-link">Jogos</Link>
+                <Link to={`/publications/${userId}`} className="navbar-link">Publicações</Link>
+              </>
+            )}
+
+            {role === "athlete" && (
+              <>
+                <Link to={`/trainings/${userId}`} className="navbar-link">Meus Treinos</Link>
+                <Link to={`/games/${userId}`} className="navbar-link">Meus Jogos</Link>
+              </>
+            )}
+
+            {role === "member" && (
+              <>
+                <Link to={`/publications/${userId}`} className="navbar-link">Conteúdo</Link>
+              </>
+            )}
           </>
         )}
       </div>
 
       <div className="navbar-right">
         {username && <span className="navbar-user">Olá, {username}</span>}
-        <button className="navbar-logout" onClick={handleLogout}>
-          Logout
-        </button>
+        {localStorage.getItem("accessToken") && (
+  <button className="navbar-logout" onClick={handleLogout}>
+    Logout
+  </button>
+)}
+
+
       </div>
     </nav>
   );

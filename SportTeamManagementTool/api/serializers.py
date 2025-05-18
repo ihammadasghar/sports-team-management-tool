@@ -115,3 +115,7 @@ class GameParticipationSerializer(serializers.ModelSerializer):
     class Meta:
         model = GameParticipation
         fields = '__all__'
+
+        
+    
+    

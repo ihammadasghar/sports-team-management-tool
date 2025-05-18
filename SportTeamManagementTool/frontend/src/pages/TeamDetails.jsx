@@ -4,7 +4,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import './TeamDetails.css';
 
 function TeamDetails() {
-  const { id } = useParams(); // id da equipa via URL
+  const { id } = useParams();
   const [publications, setPublications] = useState([]);
   const [events, setEvents] = useState([]);
   const [isTrainer, setIsTrainer] = useState(false);
@@ -18,33 +18,24 @@ function TeamDetails() {
       return;
     }
 
-    // Fetch publications
-    axios.get(`http://localhost:8000/teams/${id}/publications`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    .then(res => setPublications(res.data))
-    .catch(() => setError("Erro ao carregar publicações"));
+    const headers = { Authorization: `Bearer ${token}` };
 
-    // Fetch events (jogos e treinos)
-    axios.get(`http://localhost:8000/teams/${id}/trainings`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    .then(resTrainings => {
-      axios.get(`http://localhost:8000/teams/${id}/games`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      .then(resGames => {
-        setEvents([...resTrainings.data, ...resGames.data].sort((a,b) => new Date(a.datetime) - new Date(b.datetime)));
-      })
-      .catch(() => setError("Erro ao carregar jogos"));
-    })
-    .catch(() => setError("Erro ao carregar treinos"));
+    axios.get(`http://127.0.0.1:8000/api/teams/${id}/publications`, { headers })
+      .then(res => setPublications(res.data))
+      .catch(() => setError("Erro ao carregar publicações"));
 
-    // Verificar se és treinador (simplificado, podes buscar do backend ou token)
-    // Exemplo: token payload tem 'role' ou consultamos endpoint user info
-    // Aqui vamos assumir que o backend devolve no token ou que sabes por outro modo
-    // Por enquanto, habilita o botão manualmente
-    setIsTrainer(true);  // TODO: substituir por lógica real
+    axios.get(`http://127.0.0.1:8000/api/teams/${id}/trainings`, { headers })
+      .then(resTrainings => {
+        axios.get(`http://127.0.0.1:8000/api/teams/${id}/games`, { headers })
+          .then(resGames => {
+            const all = [...resTrainings.data, ...resGames.data].sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+            setEvents(all);
+          })
+          .catch(() => setError("Erro ao carregar jogos"));
+      })
+      .catch(() => setError("Erro ao carregar treinos"));
+
+    setIsTrainer(true); // Substituir por lógica real se necessário
   }, [id, navigate]);
 
   return (

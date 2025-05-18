@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import './NewTraining.css';
@@ -11,27 +11,28 @@ function NewTraining() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const storedId = localStorage.getItem("teamId");
+    if (storedId) setTeamId(storedId);
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
+    const token = localStorage.getItem("accessToken");
+
+    if (!token || !teamId) {
+      setError("Token ou ID da equipa não encontrado.");
+      return;
+    }
+
     try {
-      const token = localStorage.getItem("accessToken");
-
       await axios.post(
-        `http://localhost:8000/teams/${teamId}/trainings/`,
-        {
-          title,
-          description,
-          datetime,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        `http://127.0.0.1:8000/api/teams/${teamId}/trainings/`,
+        { title, description, datetime },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       navigate("/dashboard");
     } catch (err) {
       setError("Erro ao criar o treino.");
@@ -47,44 +48,20 @@ function NewTraining() {
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Título:</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
         </div>
-
         <div className="form-group">
           <label>Descrição:</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            required
-          />
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} required />
         </div>
-
         <div className="form-group">
           <label>Data e Hora:</label>
-          <input
-            type="datetime-local"
-            value={datetime}
-            onChange={(e) => setDatetime(e.target.value)}
-            required
-          />
+          <input type="datetime-local" value={datetime} onChange={(e) => setDatetime(e.target.value)} required />
         </div>
-
         <div className="form-group">
           <label>ID da Equipa:</label>
-          <input
-            type="number"
-            value={teamId}
-            onChange={(e) => setTeamId(e.target.value)}
-            required
-          />
+          <input type="number" value={teamId} readOnly />
         </div>
-
         <button type="submit" className="submit-button">Criar Treino</button>
       </form>
     </div>

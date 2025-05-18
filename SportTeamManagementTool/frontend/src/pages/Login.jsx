@@ -1,55 +1,86 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import './Login.css'; 
+import axios from "axios";
+import './Login.css';
 
 function Login() {
-  const [email, setEmail] = useState("");       
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
-      const response = await axios.post("http://localhost:8000/api/token/", {
-        username: email,  
+      // 1. Autenticar e obter tokens
+      const res = await axios.post("http://127.0.0.1:8000/api/token/", {
+        username,
         password,
+      }, {
+        headers: {
+          "Content-Type": "application/json"
+        }
       });
 
-      const { access, refresh } = response.data;
+      const access = res.data.access;
+      const refresh = res.data.refresh;
+
+      // 2. Guardar tokens
       localStorage.setItem("accessToken", access);
       localStorage.setItem("refreshToken", refresh);
 
-      navigate("/dashboard");
+      // 3. Buscar dados do utilizador autenticado
+      const userRes = await axios.get("http://127.0.0.1:8000/api/me/", {
+        headers: {
+          Authorization: `Bearer ${access}`
+        }
+      });
+
+      const user = userRes.data;
+
+      // 4. Guardar dados do utilizador
+      localStorage.setItem("userId", user.id);
+      localStorage.setItem("username", user.username);
+      localStorage.setItem("role", user.role); // trainer, athlete, member
+
+      // 5. Redirecionar para o dashboard
+      navigate("/");
     } catch (err) {
-      setError("Email ou palavra-passe inválidos.");
+      console.error(err);
+      setError("Credenciais inválidas.");
     }
   };
 
   return (
     <div className="login-container">
-      <div className="login-box">
-        <h2>Login</h2>
-        {error && <p className="error-message">{error}</p>}
-        <form onSubmit={handleSubmit}>
+      <h2>Login</h2>
+      {error && <p className="error-message">{error}</p>}
+
+      <form onSubmit={handleLogin}>
+        <div className="form-group">
+          <label>Username:</label>
           <input
             type="text"
-            placeholder="Email ou username"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
           />
+        </div>
+
+        <div className="form-group">
+          <label>Senha:</label>
           <input
             type="password"
-            placeholder="Palavra-passe"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
-          <button type="submit">Entrar</button>
-        </form>
-      </div>
+        </div>
+
+        <button type="submit">Entrar</button>
+      </form>
     </div>
   );
 }

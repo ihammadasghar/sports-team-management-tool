@@ -449,3 +449,18 @@ class GameParticipationViewSet(viewsets.ModelViewSet):
         if request.user != participation.game.created_by.user_ptr:
             return Response({"detail": "Only the trainer can delete participants."}, status=status.HTTP_403_FORBIDDEN)
         return super().destroy(request, *args, **kwargs)
+class UserMeView(APIView):
+    """
+    Endpoint para obter os dados do utilizador autenticado e o tipo (role).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        role = get_user_type(user)  
+        return Response({
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": role  # Ex: 'trainer', 'athlete', 'member', ou None
+        })
