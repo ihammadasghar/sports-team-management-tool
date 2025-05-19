@@ -53,8 +53,8 @@ function Login() {
         localStorage.setItem("athleteTeam", user.team_id);
 
       // 5. Redirecionar para o dashboard
-      window.location.reload();
       navigate("/");
+      window.location.reload();
     } catch (err) {
       console.error(err);
       setError("Credenciais inválidas.");
