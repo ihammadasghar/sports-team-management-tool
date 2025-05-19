@@ -64,54 +64,57 @@ function TeamDetails() {
         </div>
       )}
 
-      <section>
-        <h3>Publications by the trainer {}</h3>
-        {publications.length === 0 ? (
-          <p>Sem publicações para esta equipa.</p>
-        ) : (
-          <ul className="publication-list">
-            {publications.map((pub) => (
-              <li
-                key={pub.id}
-                className="publication-item"
-                onClick={() => navigate(`/publications/${pub.id}`)}
-              >
-                <h4>{pub.title}</h4>
-                <p>{pub.text}</p>
-                <small>
-                  Publicado em:{" "}
-                  {new Date(pub.date_published).toLocaleDateString()}
-                </small>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <div className="content-columns">
+          <section className="column">
+            <h3>Publications by the trainer {team?.trainer_name || ""}</h3>
+            {publications.length === 0 ? (
+              <p>Sem publicações para esta equipa.</p>
+            ) : (
+              <ul className="publication-list">
+                {publications.map((pub) => (
+                  <li
+                    key={pub.id}
+                    className="publication-item"
+                    onClick={() => navigate(`/publications/${pub.id}`)}
+                  >
+                    <h4>{pub.title}</h4>
+                    <p>{pub.text}</p>
+                    <small>
+                      Publicado em:{" "}
+                      {new Date(pub.date_published).toLocaleDateString()}
+                    </small>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
-      <section>
-        <h3>Eventos (Treinos e Jogos)</h3>
-        {events.length === 0 ? (
-          <p>Sem eventos agendados para esta equipa.</p>
-        ) : (
-          <ul className="event-list">
-            {events.map((event) => (
-              <li key={event.id} className="event-item">
-                <h4>{event.title}</h4>
-                <p>{event.description}</p>
-                <p>
-                  <strong>Data:</strong>{" "}
-                  {new Date(event.datetime).toLocaleString()}
-                </p>
-                {"opponent" in event && (
-                  <p>
-                    <strong>Adversário:</strong> {event.opponent}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          <section className="column">
+            <h3>Eventos (Treinos e Jogos)</h3>
+            {events.length === 0 ? (
+              <p>Sem eventos agendados para esta equipa.</p>
+            ) : (
+              <ul className="event-list">
+                {events.map((event) => (
+                  <li key={event.id} className="event-item">
+                    <h4>{event.title}</h4>
+                    <p>{event.description}</p>
+                    <p>
+                      <strong>Data:</strong>{" "}
+                      {new Date(event.datetime).toLocaleString()}
+                    </p>
+                    {"opponent" in event && (
+                      <p>
+                        <strong>Adversário:</strong> {event.opponent}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+
     </div>
   );
 }
