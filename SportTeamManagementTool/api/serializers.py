@@ -17,6 +17,60 @@ from .models import (
     GameAttendance,
     GameParticipation,
 )
+from rest_framework import serializers
+from django.contrib.auth.models import User
+from .models import Trainer, Athlete, Member
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'password')
+        read_only_fields = ('id',)
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user
+
+class TrainerRegistrationSerializer(serializers.Serializer):
+    user = UserSerializer()
+    specialization = serializers.CharField(max_length=100, required=False)
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        user = User.objects.create_user(**user_data)
+        Trainer.objects.create(user_ptr_id=user.id, **validated_data)
+        return user
+
+class AthleteRegistrationSerializer(serializers.Serializer):
+    user = UserSerializer()
+    birth_date = serializers.DateField()
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
+    height = serializers.IntegerField()
+    team_id = serializers.IntegerField(write_only=True) # Expect team ID for association
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        team_id = validated_data.pop('team_id')
+        user = User.objects.create_user(**user_data)
+        try:
+            team = Team.objects.get(id=team_id)
+        except Team.DoesNotExist:
+            raise serializers.ValidationError({"team_id": "Invalid team ID."})
+        Athlete.objects.create(user_ptr_id=user.id, team=team, **validated_data)
+        return user
+
+class MemberRegistrationSerializer(serializers.Serializer):
+    user = UserSerializer()
+    join_date = serializers.DateField(required=False, allow_null=True)
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        user = User.objects.create_user(**user_data)
+        Member.objects.create(user_ptr_id=user.id, **validated_data)
+        return user
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

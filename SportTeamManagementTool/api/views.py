@@ -37,7 +37,48 @@ from .serializers import (
     GameSerializer,
     GameAttendanceSerializer,
     GameParticipationSerializer,
+    TrainerRegistrationSerializer,
+    AthleteRegistrationSerializer,
+    MemberRegistrationSerializer,
+    UserSerializer,
 )
+from django.contrib.auth.models import User
+
+class TrainerRegistrationView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = TrainerRegistrationSerializer
+    permission_classes = (AllowAny,)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        user_serializer = UserSerializer(user)
+        return Response(user_serializer.data, status=status.HTTP_201_CREATED)
+
+class AthleteRegistrationView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = AthleteRegistrationSerializer
+    permission_classes = (AllowAny,)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        user_serializer = UserSerializer(user)
+        return Response(user_serializer.data, status=status.HTTP_201_CREATED)
+
+class MemberRegistrationView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = MemberRegistrationSerializer
+    permission_classes = (AllowAny,)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        user_serializer = UserSerializer(user)
+        return Response(user_serializer.data, status=status.HTTP_201_CREATED)
 
 def get_user_type(user):
     """
