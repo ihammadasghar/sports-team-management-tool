@@ -93,7 +93,7 @@ function Dashboard() {
               <h2>Teams you manage</h2>
               <ul className="team-list">
                 {teams.map((team) => {
-                  if (team.trainer == userId) {
+                  if (team.trainer.id == userId) {
                     return (
                       <li
                         key={team.id}
