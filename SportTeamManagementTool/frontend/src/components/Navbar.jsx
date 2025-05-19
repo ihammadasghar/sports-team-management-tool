@@ -27,18 +27,10 @@ function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        <Link to="/" className="navbar-logo">
-          SportsTeam
-        </Link>
-        <Link to="/" className="navbar-link">
-          Menu
-        </Link>
-        <Link to="/news" className="navbar-link">
-          Notícias
-        </Link>
-        <Link to="/schedule" className="navbar-link">
-          Horários
-        </Link>
+        <Link to="/" className="navbar-logo">SportsTeam</Link>
+        <Link to="/" className="navbar-link">Menu</Link>
+        <Link to="/news" className="navbar-link">Notícias</Link>
+        <Link to="/schedule" className="navbar-link">Horários</Link>
 
         {userId && (
           <>
@@ -60,34 +52,28 @@ function Navbar() {
               </>
             )}
 
-            {role === "athlete" && (
-              <>
-                <Link to={`/trainings/${userId}`} className="navbar-link">
-                  Meus Treinos
-                </Link>
-                <Link to={`/games/${userId}`} className="navbar-link">
-                  Meus Jogos
-                </Link>
-              </>
-            )}
-
             {role === "member" && (
-              <>
-                <Link to={`/publications/${userId}`} className="navbar-link">
-                  Conteúdo
-                </Link>
-              </>
+              <Link to={`/publications/${userId}`} className="navbar-link">
+                Conteúdo
+              </Link>
             )}
           </>
         )}
       </div>
 
       <div className="navbar-right">
-        {username && <span className="navbar-user">Olá, {username}</span>}
-        {localStorage.getItem("accessToken") && (
-          <button className="navbar-logout" onClick={handleLogout}>
-            Logout
-          </button>
+        {username ? (
+          <>
+            <span className="navbar-user">Olá, {username}</span>
+            <button className="navbar-logout" onClick={handleLogout}>
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className="navbar-link">Login</Link>
+            <Link to="/signup" className="navbar-link">Criar Conta</Link>
+          </>
         )}
       </div>
     </nav>
