@@ -18,6 +18,8 @@ import { Fragment } from "react";
 import MyTeams from "./pages/MyTeams";
 import PrivateRoute from "./components/PrivateRoute"; // importa o componente protegido
 import SignUp from "./pages/SignUp";
+import EventForm from "./pages/NewEvent";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 function AppWrapper() {
   const location = useLocation();
@@ -43,6 +45,7 @@ function AppWrapper() {
           <Route path="/publications/:id" element={<PublicationDetails />} />
           <Route path="/trainings/newtraining" element={<NewTraining />} />
           <Route path="/myteams" element={<MyTeams />} />
+          <Route path="/teams/:id/events/new" element={<EventForm />} />
         </Route>
       </Routes>
     </Fragment>
