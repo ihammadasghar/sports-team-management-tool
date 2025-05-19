@@ -44,7 +44,7 @@ class MembershipSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class TeamSerializer(serializers.ModelSerializer):
-    #trainer = TrainerSerializer(read_only=True)  # Display trainer details
+    trainer = TrainerSerializer(read_only=True) 
     class Meta:
         model = Team
         fields = '__all__'

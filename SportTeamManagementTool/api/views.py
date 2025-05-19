@@ -464,6 +464,15 @@ class UserMeView(APIView):
     def get(self, request):
         user = request.user
         role = get_user_type(user)  
+        print(user)
+        if role == "athlete":
+            return Response({
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "role": role,
+                "team_id": user.athlete.team.id
+            }) 
         return Response({
             "id": user.id,
             "username": user.username,

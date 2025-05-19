@@ -9,6 +9,23 @@ function Dashboard() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const [username, setUsername] = useState("");
+  const [userId, setUserId] = useState(null);
+  const [role, setRole] = useState("");
+  const [athleteTeam, setAthleteTeam] = useState(0);
+
+  useEffect(() => {
+    const user = localStorage.getItem("username");
+    const id = localStorage.getItem("userId");
+    const role = localStorage.getItem("role");
+    const athleteTeam = localStorage.getItem("athleteTeam");
+
+    if (user) setUsername(user);
+    if (id) setUserId(id);
+    if (role) setRole(role);
+    if (athleteTeam) setAthleteTeam(athleteTeam);
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
 
@@ -32,10 +49,14 @@ function Dashboard() {
       });
   }, [navigate]);
 
+  console.log("Team:", athleteTeam);
+
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
-        <h1>Bem-vindo ao teu Dashboard</h1>
+        {role == "trainer" ? <h1>Welcome trainer {username}!</h1> : <></>}
+        {role == "athlete" ? <h1>Welcome athlete {username}!</h1> : <></>}
+        {role == "member" ? <h1>Welcome member {username}!</h1> : <></>}
       </header>
 
       <main className="dashboard-main">
@@ -67,20 +88,79 @@ function Dashboard() {
         </section>
 
         <section className="team-list-section">
-          <h2>Minhas Equipas</h2>
+          {role == "trainer" ? (
+            <>
+              <h2>Teams you manage</h2>
+              <ul className="team-list">
+                {teams.map((team) => {
+                  if (team.trainer == userId) {
+                    return (
+                      <li
+                        key={team.id}
+                        className="team-card"
+                        onClick={() => navigate(`/teams/${team.id}`)}
+                      >
+                        <h3>{team.name}</h3>
+                        <h4>Number of members: {team.members.length}</h4>
+                        <p>{team.description}</p>
+                      </li>
+                    );
+                  }
+                })}
+              </ul>
+            </>
+          ) : (
+            <></>
+          )}
+          {role == "athlete" ? (
+            <>
+              <h2>Your Team</h2>
+              <ul className="team-list">
+                {teams.map((team) => {
+                  if (team.id == athleteTeam) {
+                    return (
+                      <li
+                        key={team.id}
+                        className="team-card"
+                        onClick={() => navigate(`/teams/${team.id}`)}
+                      >
+                        <h3>{team.name}</h3>
+                        <h4>Number of members: {team.members.length}</h4>
+                        <p>{team.description}</p>
+                      </li>
+                    );
+                  }
+                })}
+              </ul>
+            </>
+          ) : (
+            <></>
+          )}
+          {role == "member" ? (
+            <>
+              <h2>Teams you support</h2>
+              <ul className="team-list">
+                {teams.map((team) => {
+                  if (team.members.includes(userId)) {
+                    return (
+                      <li
+                        key={team.id}
+                        className="team-card"
+                        onClick={() => navigate(`/teams/${team.id}`)}
+                      >
+                        <h3>{team.name}</h3>
+                        <h4>Number of members: {team.members.length}</h4>
+                        <p>{team.description}</p>
+                      </li>
+                    );
+                  }
+                })}
+              </ul>
+            </>
+          ) : (
+            <></>
+          )}
           {error && <p className="error-message">{error}</p>}
-          <ul className="team-list">
-            {teams.map((team) => (
-              <li
-                key={team.id}
-                className="team-card"
-                onClick={() => navigate(`/teams/${team.id}`)}
-              >
-                <h3>{team.name}</h3>
-                <p>{team.description}</p>
-              </li>
-            ))}
-          </ul>
         </section>
       </main>
 

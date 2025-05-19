@@ -49,8 +49,11 @@ function Login() {
       localStorage.setItem("userId", user.id);
       localStorage.setItem("username", user.username);
       localStorage.setItem("role", user.role); // trainer, athlete, member
+      if (user.role === "athlete")
+        localStorage.setItem("athleteTeam", user.team_id);
 
       // 5. Redirecionar para o dashboard
+      window.location.reload();
       navigate("/");
     } catch (err) {
       console.error(err);

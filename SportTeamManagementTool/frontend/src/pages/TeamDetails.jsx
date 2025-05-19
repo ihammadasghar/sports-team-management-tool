@@ -7,6 +7,7 @@ function TeamDetails() {
   const { id } = useParams();
   const [publications, setPublications] = useState([]);
   const [events, setEvents] = useState([]);
+  const [team, setTeam] = useState(null);
   const [isTrainer, setIsTrainer] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -19,6 +20,10 @@ function TeamDetails() {
     }
 
     const headers = { Authorization: `Bearer ${token}` };
+    axios
+      .get(`http://127.0.0.1:8000/api/teams/${id}`, { headers })
+      .then((res) => setTeam(res.data))
+      .catch(() => setError("Erro ao carregar publicações"));
 
     axios
       .get(`http://127.0.0.1:8000/api/teams/${id}/publications`, { headers })
@@ -45,7 +50,7 @@ function TeamDetails() {
 
   return (
     <div className="team-details-container">
-      <h2>Detalhes da Equipa</h2>
+      <h2>Team details</h2>
       {error && <p className="error-message">{error}</p>}
 
       {isTrainer && (
@@ -60,7 +65,7 @@ function TeamDetails() {
       )}
 
       <section>
-        <h3>Publicações</h3>
+        <h3>Publications by the trainer {}</h3>
         {publications.length === 0 ? (
           <p>Sem publicações para esta equipa.</p>
         ) : (
