@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import NewPublication from "./pages/NewPublication";
@@ -11,6 +16,7 @@ import News from "./pages/News";
 import Schedule from "./pages/Schedule";
 import PrivateRoute from "./components/PrivateRoute";
 import { Fragment } from "react";
+import MyTeams from "./pages/MyTeams";
 
 function AppWrapper() {
   const location = useLocation();
@@ -28,9 +34,13 @@ function AppWrapper() {
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/games/newgame" element={<NewGame />} />
           <Route path="/teams/:id" element={<TeamDetails />} />
-          <Route path="/teams/:id/publications/new" element={<NewPublication />} />
+          <Route
+            path="/teams/:id/publications/new"
+            element={<NewPublication />}
+          />
           <Route path="/publications/:id" element={<PublicationDetails />} />
           <Route path="/trainings/newtraining" element={<NewTraining />} />
+          <Route path="/myteams" element={<MyTeams />} />
         </Route>
       </Routes>
     </Fragment>

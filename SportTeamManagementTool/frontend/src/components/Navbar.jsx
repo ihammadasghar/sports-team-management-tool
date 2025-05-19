@@ -42,7 +42,7 @@ function Navbar() {
 
         {userId && (
           <>
-            <Link to={`/teams/${userId}`} className="navbar-link">
+            <Link to={`/myteams`} className="navbar-link">
               Minhas Equipas
             </Link>
 
