@@ -1,12 +1,14 @@
 import { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import './NewPublication.css';  // Importa o CSS
+import { useNavigate, useParams } from "react-router-dom";
+import "./NewPublication.css"; // Importa o CSS
+import { getCurrentDateFormatted } from "../utils/utils";
 
 function NewPublication() {
+  const { id } = useParams();
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
-  const [teamId, setTeamId] = useState("");
+  const teamId = id;
   const [imageFile, setImageFile] = useState(null);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -22,6 +24,7 @@ function NewPublication() {
       formData.append("title", title);
       formData.append("text", text);
       formData.append("team", teamId);
+      formData.append("date_published", getCurrentDateFormatted());
       if (imageFile) {
         formData.append("image", imageFile);
       }
@@ -66,26 +69,9 @@ function NewPublication() {
           />
         </div>
 
-        <div className="form-group">
-          <label>ID da Equipa:</label>
-          <input
-            type="number"
-            value={teamId}
-            onChange={(e) => setTeamId(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Imagem (opcional):</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setImageFile(e.target.files[0])}
-          />
-        </div>
-
-        <button type="submit" className="submit-button">Criar</button>
+        <button type="submit" className="submit-button">
+          Criar
+        </button>
       </form>
     </div>
   );

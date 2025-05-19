@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import './Navbar.css';
+import "./Navbar.css";
 
 function Navbar() {
   const navigate = useNavigate();
@@ -20,39 +20,62 @@ function Navbar() {
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate("/");
+    window.location.reload();
+    navigate("/login");
   };
 
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        <Link to="/" className="navbar-logo">SportsTeam</Link>
-        <Link to="/" className="navbar-link">Menu</Link>
-        <Link to="/news" className="navbar-link">Notícias</Link>
-        <Link to="/schedule" className="navbar-link">Horários</Link>
+        <Link to="/" className="navbar-logo">
+          SportsTeam
+        </Link>
+        <Link to="/" className="navbar-link">
+          Menu
+        </Link>
+        <Link to="/news" className="navbar-link">
+          Notícias
+        </Link>
+        <Link to="/schedule" className="navbar-link">
+          Horários
+        </Link>
 
         {userId && (
           <>
-            <Link to={`/teams/${userId}`} className="navbar-link">Minhas Equipas</Link>
+            <Link to={`/teams/${userId}`} className="navbar-link">
+              Minhas Equipas
+            </Link>
 
             {role === "trainer" && (
               <>
-                <Link to={`/trainings/${userId}`} className="navbar-link">Treinos</Link>
-                <Link to={`/games/${userId}`} className="navbar-link">Jogos</Link>
-                <Link to={`/publications/${userId}`} className="navbar-link">Publicações</Link>
+                <Link to={`/trainings/${userId}`} className="navbar-link">
+                  Treinos
+                </Link>
+                <Link to={`/games/${userId}`} className="navbar-link">
+                  Jogos
+                </Link>
+                <Link to={`/publications/${userId}`} className="navbar-link">
+                  Publicações
+                </Link>
               </>
             )}
 
             {role === "athlete" && (
               <>
-                <Link to={`/trainings/${userId}`} className="navbar-link">Meus Treinos</Link>
-                <Link to={`/games/${userId}`} className="navbar-link">Meus Jogos</Link>
+                <Link to={`/trainings/${userId}`} className="navbar-link">
+                  Meus Treinos
+                </Link>
+                <Link to={`/games/${userId}`} className="navbar-link">
+                  Meus Jogos
+                </Link>
               </>
             )}
 
             {role === "member" && (
               <>
-                <Link to={`/publications/${userId}`} className="navbar-link">Conteúdo</Link>
+                <Link to={`/publications/${userId}`} className="navbar-link">
+                  Conteúdo
+                </Link>
               </>
             )}
           </>
@@ -62,12 +85,10 @@ function Navbar() {
       <div className="navbar-right">
         {username && <span className="navbar-user">Olá, {username}</span>}
         {localStorage.getItem("accessToken") && (
-  <button className="navbar-logout" onClick={handleLogout}>
-    Logout
-  </button>
-)}
-
-
+          <button className="navbar-logout" onClick={handleLogout}>
+            Logout
+          </button>
+        )}
       </div>
     </nav>
   );

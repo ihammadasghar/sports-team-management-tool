@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import './Login.css';
+import "./Login.css";
 
 function Login() {
   const [username, setUsername] = useState("");
@@ -15,14 +15,19 @@ function Login() {
 
     try {
       // 1. Autenticar e obter tokens
-      const res = await axios.post("http://127.0.0.1:8000/api/token/", {
-        username,
-        password,
-      }, {
-        headers: {
-          "Content-Type": "application/json"
+      const res = await axios.post(
+        "http://127.0.0.1:8000/api/token/",
+        {
+          username,
+          password,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
+      console.log(res);
 
       const access = res.data.access;
       const refresh = res.data.refresh;
@@ -34,8 +39,8 @@ function Login() {
       // 3. Buscar dados do utilizador autenticado
       const userRes = await axios.get("http://127.0.0.1:8000/api/me/", {
         headers: {
-          Authorization: `Bearer ${access}`
-        }
+          Authorization: `Bearer ${access}`,
+        },
       });
 
       const user = userRes.data;

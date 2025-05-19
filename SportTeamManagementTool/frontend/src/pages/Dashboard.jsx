@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import './Dashboard.css';
-import logo from '../assets/logo.jpg'; 
+import "./Dashboard.css";
+import logo from "../assets/logo.jpg";
 
 function Dashboard() {
   const [teams, setTeams] = useState([]);
@@ -17,18 +17,19 @@ function Dashboard() {
       return;
     }
 
-    axios.get("http://127.0.0.1:8000/api/teams/", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    .then((res) => {
-      setTeams(res.data);
-    })
-    .catch((err) => {
-      console.error(err);
-      setError("Erro ao carregar equipas.");
-    });
+    axios
+      .get("http://127.0.0.1:8000/api/teams/", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        setTeams(res.data);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Erro ao carregar equipas.");
+      });
   }, [navigate]);
 
   return (
@@ -49,7 +50,11 @@ function Dashboard() {
           </div>
           <div className="info-card">
             <h3>Jogadores</h3>
-            <p>23</p>
+            <p>
+              {teams.reduce((accumulator, currentValue) => {
+                return accumulator + currentValue.members.length;
+              }, 0)}
+            </p>
           </div>
           <div className="info-card">
             <h3>Treinos esta semana</h3>
@@ -66,7 +71,11 @@ function Dashboard() {
           {error && <p className="error-message">{error}</p>}
           <ul className="team-list">
             {teams.map((team) => (
-              <li key={team.id} className="team-card">
+              <li
+                key={team.id}
+                className="team-card"
+                onClick={() => navigate(`/teams/${team.id}`)}
+              >
                 <h3>{team.name}</h3>
                 <p>{team.description}</p>
               </li>

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
-import './PublicationDetails.css';
+import "./PublicationDetails.css";
+import { getCurrentDateFormatted } from "../utils/utils";
 
 function PublicationDetails() {
   const { id } = useParams();
@@ -17,13 +18,15 @@ function PublicationDetails() {
 
     const headers = { Authorization: `Bearer ${token}` };
 
-    axios.get(`http://127.0.0.1:8000/api/publications/${id}`, { headers })
-      .then(res => setPublication(res.data))
+    axios
+      .get(`http://127.0.0.1:8000/api/publications/${id}`, { headers })
+      .then((res) => setPublication(res.data))
       .catch(() => setError("Erro ao carregar publicação"))
       .finally(() => setLoading(false));
 
-    axios.get(`http://127.0.0.1:8000/api/publications/${id}/comments`, { headers })
-      .then(res => setComments(res.data))
+    axios
+      .get(`http://127.0.0.1:8000/api/publications/${id}/comments`, { headers })
+      .then((res) => setComments(res.data))
       .catch(() => setError("Erro ao carregar comentários"));
   }, [id, token]);
 
@@ -33,14 +36,21 @@ function PublicationDetails() {
 
     try {
       await axios.post(
-        `http://127.0.0.1:8000/api/publications/${id}/comments`,
-        { text: newComment },
+        `http://127.0.0.1:8000/api/comments/`,
+        {
+          text: newComment,
+          publication_id: id,
+          date_published: getCurrentDateFormatted(),
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const res = await axios.get(`http://127.0.0.1:8000/api/publications/${id}/comments`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await axios.get(
+        `http://127.0.0.1:8000/api/publications/${id}/comments`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setComments(res.data);
       setNewComment("");
     } catch {
@@ -55,16 +65,19 @@ function PublicationDetails() {
     <div className="publication-details-container">
       <h2>{publication.title}</h2>
       <p>{publication.text}</p>
-      <small>Publicado em: {new Date(publication.date_published).toLocaleDateString()}</small>
+      <small>
+        Publicado em:{" "}
+        {new Date(publication.date_published).toLocaleDateString()}
+      </small>
 
       <section className="comments-section">
         <h3>Comentários</h3>
         {comments.length === 0 && <p>Sem comentários.</p>}
         <ul>
-          {comments.map(comment => (
+          {comments.map((comment) => (
             <li key={comment.id} className="comment-item">
               <p>{comment.text}</p>
-              <small>Por: {comment.author_username || "Anónimo"}</small>
+              <small>Por: {comment.author.username || "Anónimo"}</small>
             </li>
           ))}
         </ul>

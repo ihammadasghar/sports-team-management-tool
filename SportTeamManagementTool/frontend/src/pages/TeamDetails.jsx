@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import './TeamDetails.css';
+import "./TeamDetails.css";
 
 function TeamDetails() {
   const { id } = useParams();
@@ -20,15 +20,20 @@ function TeamDetails() {
 
     const headers = { Authorization: `Bearer ${token}` };
 
-    axios.get(`http://127.0.0.1:8000/api/teams/${id}/publications`, { headers })
-      .then(res => setPublications(res.data))
+    axios
+      .get(`http://127.0.0.1:8000/api/teams/${id}/publications`, { headers })
+      .then((res) => setPublications(res.data))
       .catch(() => setError("Erro ao carregar publicações"));
 
-    axios.get(`http://127.0.0.1:8000/api/teams/${id}/trainings`, { headers })
-      .then(resTrainings => {
-        axios.get(`http://127.0.0.1:8000/api/teams/${id}/games`, { headers })
-          .then(resGames => {
-            const all = [...resTrainings.data, ...resGames.data].sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+    axios
+      .get(`http://127.0.0.1:8000/api/teams/${id}/trainings`, { headers })
+      .then((resTrainings) => {
+        axios
+          .get(`http://127.0.0.1:8000/api/teams/${id}/games`, { headers })
+          .then((resGames) => {
+            const all = [...resTrainings.data, ...resGames.data].sort(
+              (a, b) => new Date(a.datetime) - new Date(b.datetime)
+            );
             setEvents(all);
           })
           .catch(() => setError("Erro ao carregar jogos"));
@@ -45,8 +50,12 @@ function TeamDetails() {
 
       {isTrainer && (
         <div className="actions">
-          <Link to={`/teams/${id}/publications/new`} className="btn">Nova Publicação</Link>
-          <Link to={`/teams/${id}/events/new`} className="btn">Novo Evento</Link>
+          <Link to={`/teams/${id}/publications/new`} className="btn">
+            Nova Publicação
+          </Link>
+          <Link to={`/teams/${id}/events/new`} className="btn">
+            Novo Evento
+          </Link>
         </div>
       )}
 
@@ -56,11 +65,18 @@ function TeamDetails() {
           <p>Sem publicações para esta equipa.</p>
         ) : (
           <ul className="publication-list">
-            {publications.map(pub => (
-              <li key={pub.id} className="publication-item">
+            {publications.map((pub) => (
+              <li
+                key={pub.id}
+                className="publication-item"
+                onClick={() => navigate(`/publications/${pub.id}`)}
+              >
                 <h4>{pub.title}</h4>
                 <p>{pub.text}</p>
-                <small>Publicado em: {new Date(pub.date_published).toLocaleDateString()}</small>
+                <small>
+                  Publicado em:{" "}
+                  {new Date(pub.date_published).toLocaleDateString()}
+                </small>
               </li>
             ))}
           </ul>
@@ -73,12 +89,19 @@ function TeamDetails() {
           <p>Sem eventos agendados para esta equipa.</p>
         ) : (
           <ul className="event-list">
-            {events.map(event => (
+            {events.map((event) => (
               <li key={event.id} className="event-item">
                 <h4>{event.title}</h4>
                 <p>{event.description}</p>
-                <p><strong>Data:</strong> {new Date(event.datetime).toLocaleString()}</p>
-                {"opponent" in event && <p><strong>Adversário:</strong> {event.opponent}</p>}
+                <p>
+                  <strong>Data:</strong>{" "}
+                  {new Date(event.datetime).toLocaleString()}
+                </p>
+                {"opponent" in event && (
+                  <p>
+                    <strong>Adversário:</strong> {event.opponent}
+                  </p>
+                )}
               </li>
             ))}
           </ul>

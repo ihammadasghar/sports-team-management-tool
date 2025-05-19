@@ -44,6 +44,7 @@ def get_user_type(user):
     Determine the type of user (Athlete, Trainer, or Member).
     Returns None if the user doesn't belong to any of these.
     """
+    print(user)
     if hasattr(user, 'athlete'):
         return 'athlete'
     elif hasattr(user, 'trainer'):
@@ -231,12 +232,17 @@ class PublicationList(generics.ListCreateAPIView):
         if not hasattr(request.user, 'trainer'):
             return Response({"detail": "Only trainers can create publications."}, status=status.HTTP_403_FORBIDDEN)
 
-        # Ensure the trainer is part of the team.
         team_id = request.data.get('team')  # Assuming the request includes the team ID
+        print(Team.objects.filter(id=team_id).first().trainer)
         if not Team.objects.filter(id=team_id, trainer=request.user.trainer).exists():
             return Response({"detail": "Trainer must belong to the team to create a publication."}, status=status.HTTP_400_BAD_REQUEST)
 
-        return super().create(request, *args, **kwargs)
+        text = request.data.get('text')
+        date_published = request.data.get("date_published")
+        team = get_object_or_404(Team, pk=team_id)
+        publication = Publication.objects.create(text=text, author=request.user.trainer, team=team, date_published=date_published)
+        serializer = PublicationSerializer(publication)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class PublicationDetail(generics.RetrieveUpdateDestroyAPIView):
