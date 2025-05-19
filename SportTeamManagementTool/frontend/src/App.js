@@ -14,6 +14,7 @@ import PublicationDetails from "./pages/PublicationDetails";
 import Navbar from "./components/Navbar";
 import News from "./pages/News";
 import Schedule from "./pages/Schedule";
+<<<<<<< Updated upstream
 import PrivateRoute from "./components/PrivateRoute";
 import { Fragment } from "react";
 import MyTeams from "./pages/MyTeams";
@@ -21,6 +22,10 @@ import MyTeams from "./pages/MyTeams";
 function AppWrapper() {
   const location = useLocation();
   const hideNavbar = location.pathname === "/login";
+=======
+import PrivateRoute from "./components/PrivateRoute"; // importa o componente protegido
+import SignUp from './pages/SignUp';
+>>>>>>> Stashed changes
 
   return (
     <Fragment>
@@ -28,6 +33,7 @@ function AppWrapper() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/news" element={<News />} />
+        <Route path="/signup" element={<SignUp />} />
 
         <Route element={<PrivateRoute />}>
           <Route path="/" element={<Dashboard />} />
