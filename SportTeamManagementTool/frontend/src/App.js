@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import NewPublication from "./pages/NewPublication";
@@ -9,32 +9,38 @@ import PublicationDetails from "./pages/PublicationDetails";
 import Navbar from "./components/Navbar";
 import News from "./pages/News";
 import Schedule from "./pages/Schedule";
-import PrivateRoute from "./components/PrivateRoute"; // importa o componente protegido
+import PrivateRoute from "./components/PrivateRoute";
+import { Fragment } from "react";
 
-function App() {
+function AppWrapper() {
+  const location = useLocation();
+  const hideNavbar = location.pathname === "/login";
+
   return (
-    <Router>
-      <Navbar />
+    <Fragment>
+      {!hideNavbar && <Navbar />}
       <Routes>
-        {/* Rota pública */}
         <Route path="/login" element={<Login />} />
         <Route path="/news" element={<News />} />
 
-        {/* Rotas protegidas */}
         <Route element={<PrivateRoute />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/games/newgame" element={<NewGame />} />
           <Route path="/teams/:id" element={<TeamDetails />} />
-          <Route
-            path="/teams/:id/publications/new"
-            element={<NewPublication />}
-          />
-          <Route path="/publications/:id" element={<PublicationDetails />} />
+          <Route path="/teams/:id/publications/new" element={<NewPublication />} />
           <Route path="/publications/:id" element={<PublicationDetails />} />
           <Route path="/trainings/newtraining" element={<NewTraining />} />
         </Route>
       </Routes>
+    </Fragment>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppWrapper />
     </Router>
   );
 }
