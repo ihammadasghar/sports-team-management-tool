@@ -1,63 +1,126 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useLocation,
-} from "react-router-dom";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import NewPublication from "./pages/NewPublication";
-import NewGame from "./pages/NewGame";
-import NewTraining from "./pages/NewTraining";
-import TeamDetails from "./pages/TeamDetails";
-import PublicationDetails from "./pages/PublicationDetails";
-import Navbar from "./components/Navbar";
-import News from "./pages/News";
-import Schedule from "./pages/Schedule";
-import { Fragment } from "react";
-import MyTeams from "./pages/MyTeams";
-import PrivateRoute from "./components/PrivateRoute"; // importa o componente protegido
-import SignUp from "./pages/SignUp";
-import EventForm from "./pages/NewEvent";
-import "bootstrap/dist/css/bootstrap.min.css";
-
-function AppWrapper() {
-  const location = useLocation();
-  const hideNavbar = location.pathname === "/login";
-
-  return (
-    <Fragment>
-      {!hideNavbar && <Navbar />}
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/news" element={<News />} />
-        <Route path="/signup" element={<SignUp />} />
-
-        <Route element={<PrivateRoute />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/schedule" element={<Schedule />} />
-          <Route path="/games/newgame" element={<NewGame />} />
-          <Route path="/teams/:id" element={<TeamDetails />} />
-          <Route
-            path="/teams/:id/publications/new"
-            element={<NewPublication />}
-          />
-          <Route path="/publications/:id" element={<PublicationDetails />} />
-          <Route path="/trainings/newtraining" element={<NewTraining />} />
-          <Route path="/myteams" element={<MyTeams />} />
-          <Route path="/teams/:id/events/new" element={<EventForm />} />
-        </Route>
-      </Routes>
-    </Fragment>
-  );
-}
+import React, { useState, useEffect } from "react";
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import { useDispatch, useSelector, StoreProvider } from "./redux/store"; // Import StoreProvider here
+import { logoutUser } from "./redux/asyncActions";
+import Header from "./components/Header";
+import AuthGuard from "./components/AuthGuard";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import DashboardPage from "./pages/DashboardPage";
+import TeamDetailPage from "./pages/TeamDetailPage";
+import PostDetailPage from "./pages/PostDetailPage";
+import CreateTeamPage from "./pages/CreateTeamPage";
+import { theme } from "./theme/muiTheme";
 
 function App() {
+  const [currentPage, setCurrentPage] = useState("login");
+  const [pageParams, setPageParams] = useState({}); // To pass IDs to detail pages
+
+  const dispatch = useDispatch();
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+
+  // Set initial page based on authentication status
+  useEffect(() => {
+    if (isAuthenticated) {
+      setCurrentPage("dashboard");
+    } else {
+      setCurrentPage("login");
+    }
+  }, [isAuthenticated]);
+
+  const handleNavigate = (page, params = {}) => {
+    setCurrentPage(page);
+    setPageParams(params);
+  };
+
+  const handleLogout = () => {
+    logoutUser(dispatch);
+    handleNavigate("login");
+  };
+
+  const handleCreateTeamClick = () => {
+    handleNavigate("createTeam");
+  };
+
+  let PageComponent;
+  switch (currentPage) {
+    case "login":
+      PageComponent = <LoginPage navigateTo={handleNavigate} />;
+      break;
+    case "register":
+      PageComponent = <RegisterPage navigateTo={handleNavigate} />;
+      break;
+    case "dashboard":
+      PageComponent = (
+        <AuthGuard
+          isAuthenticated={isAuthenticated}
+          navigateTo={handleNavigate}
+        >
+          <DashboardPage navigateTo={handleNavigate} />
+        </AuthGuard>
+      );
+      break;
+    case "teamDetail":
+      PageComponent = (
+        <AuthGuard
+          isAuthenticated={isAuthenticated}
+          navigateTo={handleNavigate}
+        >
+          <TeamDetailPage
+            teamId={pageParams.teamId}
+            navigateTo={handleNavigate}
+          />
+        </AuthGuard>
+      );
+      break;
+    case "postDetail":
+      PageComponent = (
+        <AuthGuard
+          isAuthenticated={isAuthenticated}
+          navigateTo={handleNavigate}
+        >
+          <PostDetailPage
+            teamId={pageParams.teamId}
+            postId={pageParams.postId}
+            navigateTo={handleNavigate}
+          />
+        </AuthGuard>
+      );
+      break;
+    case "createTeam":
+      PageComponent = (
+        <AuthGuard
+          isAuthenticated={isAuthenticated}
+          navigateTo={handleNavigate}
+        >
+          <CreateTeamPage navigateTo={handleNavigate} />
+        </AuthGuard>
+      );
+      break;
+    default:
+      PageComponent = <LoginPage navigateTo={handleNavigate} />;
+  }
+
   return (
-    <Router>
-      <AppWrapper />
-    </Router>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Header
+        isAuthenticated={isAuthenticated}
+        username={user?.username}
+        onLogout={handleLogout}
+        onCreateTeamClick={handleCreateTeamClick}
+      />
+      {PageComponent}
+    </ThemeProvider>
   );
 }
 
-export default App;
+// Wrap the App with the StoreProvider
+// This is exported as default so index.js can use it
+export default function AppWrapper() {
+  return (
+    <StoreProvider>
+      <App />
+    </StoreProvider>
+  );
+}

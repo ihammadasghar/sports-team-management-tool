@@ -1,105 +1,75 @@
-from django.contrib.auth.models import User
 from django.db import models
+from django.contrib.auth.models import AbstractUser # Or use your custom User model
+from django.conf import settings # To reference AUTH_USER_MODEL
 
-class Trainer(User):
-    specialization = models.CharField(max_length=100, blank=True)
-    profile_picture = models.ImageField(upload_to='trainers/', null=True, blank=True)
-
-    def __str__(self):
-        return f"Trainer: {self.username}"
-
-
-class Member(User):
-    join_date = models.DateField(null=True, blank=True)
-    profile_picture = models.ImageField(upload_to='members/', null=True, blank=True)
-
-    def __str__(self):
-        return f"Member: {self.username}"
+class User(AbstractUser):
+    # You can add custom fields here if needed, e.g., 'date_of_birth', 'phone_number', etc.
+    pass
 
 class Team(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.CharField(max_length=500)
-    logo = models.ImageField(upload_to='teams/', null=True, blank=True)
-    members = models.ManyToManyField(Member, through='Membership')
-    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+    trainer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL, # Or models.CASCADE if you want teams to be deleted when trainer is deleted
+        related_name='teams_as_trainer',
+        null=True,
+        help_text="The user who created and manages this team (trainer)."
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Team: {self.name}"
+        return self.name
 
-class Athlete(User):
-    birth_date = models.DateField()
-    profile_picture = models.ImageField(upload_to='athletes/', null=True, blank=True)
-    height = models.IntegerField()
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+class TeamMembership(models.Model):
+    class Role(models.TextChoices):
+        TRAINER = 'trainer', 'Trainer'
+        ATHLETE = 'athlete', 'Athlete'
+        MEMBER = 'member', 'Member'
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='team_memberships')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='memberships')
+    role = models.CharField(max_length=20, choices=Role.choices)
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'team') # A user can only have one role per team
 
     def __str__(self):
-        return f"Athlete: {self.username}"
+        return f"{self.user.username} - {self.team.name} ({self.get_role_display()})"
 
-class Membership(models.Model):
-    member = models.ForeignKey(Member, on_delete=models.CASCADE)
-    group = models.ForeignKey(Team, on_delete=models.CASCADE)
-    date_joined = models.DateField()
-
-class Publication(models.Model):
-    title = models.CharField(max_length=150)
-    text = models.CharField(max_length=500)
-    author = models.ForeignKey(Trainer, on_delete=models.CASCADE)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    date_published = models.DateField()
+class Post(models.Model):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='posts')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posts')
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.title
 
-class MemberComment(models.Model):
-    text = models.CharField(max_length=500)
-    author = models.ForeignKey(Member, on_delete=models.CASCADE)
-    date_published = models.DateField()
-    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
+class Comment(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comments')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-class AthleteComment(models.Model):
-    text = models.CharField(max_length=500)
-    author = models.ForeignKey(Athlete, on_delete=models.CASCADE)
-    date_published = models.DateField()
-    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
-
-class TrainerComment(models.Model):
-    text = models.CharField(max_length=500)
-    author = models.ForeignKey(Trainer, on_delete=models.CASCADE)
-    date_published = models.DateField()
-    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
+    def __str__(self):
+        return f"Comment by {self.author.username} on {self.post.title[:30]}..."
 
 class Event(models.Model):
-    title = models.CharField(max_length=150)
-    description = models.CharField(max_length=500)
-    created_by = models.ForeignKey(Trainer, on_delete=models.CASCADE)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    datetime = models.DateTimeField()
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='events')
+    trainer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='events_created')
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField(blank=True, null=True) # Optional end time
+    location = models.CharField(max_length=200, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.title
-
-class Training(Event):
-    attendance = models.ManyToManyField(Athlete, through='TrainingAttendance')
-
-    def __str__(self):
-        return self.title
-
-class TrainingAttendance(models.Model):
-    athlete = models.ForeignKey(Athlete, on_delete=models.CASCADE)
-    training = models.ForeignKey(Training, on_delete=models.CASCADE)
-
-class Game(Event):
-    opponent = models.CharField(max_length=100)
-    attendance = models.ManyToManyField(Member, through='GameAttendance')
-    participants = models.ManyToManyField(Athlete, through='GameParticipation')
-
-    def __str__(self):
-        return self.title
-
-class GameAttendance(models.Model):
-    member = models.ForeignKey(Member, on_delete=models.CASCADE)
-    game = models.ForeignKey(Game, on_delete=models.CASCADE)
-
-class GameParticipation(models.Model):
-    athlete = models.ForeignKey(Athlete, on_delete=models.CASCADE)
-    game = models.ForeignKey(Game, on_delete=models.CASCADE)

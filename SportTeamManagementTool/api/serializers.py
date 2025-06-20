@@ -1,175 +1,148 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
-from .models import (
-    Athlete,
-    Trainer,
-    Member,
-    Team,
-    Membership,
-    Publication,
-    MemberComment,
-    AthleteComment,
-    TrainerComment,
-    Event,
-    Training,
-    TrainingAttendance,
-    Game,
-    GameAttendance,
-    GameParticipation,
-)
-from rest_framework import serializers
-from django.contrib.auth.models import User
-from .models import Trainer, Athlete, Member
+from django.contrib.auth import authenticate
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+
+from .models import User, Team, TeamMembership, Post, Comment, Event
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'password')
-        read_only_fields = ('id',)
-        extra_kwargs = {'password': {'write_only': True}}
+        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+        read_only_fields = ['username', 'email'] # Depending on your user registration flow
 
-    def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        return user
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password2 = serializers.CharField(write_only=True, required=True)
 
-class TrainerRegistrationSerializer(serializers.Serializer):
-    user = UserSerializer()
-    specialization = serializers.CharField(max_length=100, required=False)
-    profile_picture = serializers.ImageField(required=False, allow_null=True)
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password', 'password2', 'first_name', 'last_name']
+        extra_kwargs = {
+            'first_name': {'required': False},
+            'last_name': {'required': False},
+            'email': {'required': True}, # Make email required for registration
+        }
 
-    def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = User.objects.create_user(**user_data)
-        Trainer.objects.create(user_ptr_id=user.id, **validated_data)
-        return user
+    def validate(self, data):
+        if data['password'] != data['password2']:
+            raise serializers.ValidationError({"password": "Password fields didn't match."})
 
-class AthleteRegistrationSerializer(serializers.Serializer):
-    user = UserSerializer()
-    birth_date = serializers.DateField()
-    profile_picture = serializers.ImageField(required=False, allow_null=True)
-    height = serializers.IntegerField()
-    team_id = serializers.IntegerField(write_only=True) # Expect team ID for association
-
-    def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        team_id = validated_data.pop('team_id')
-        user = User.objects.create_user(**user_data)
+        # Validate password strength using Django's validators
         try:
-            team = Team.objects.get(id=team_id)
-        except Team.DoesNotExist:
-            raise serializers.ValidationError({"team_id": "Invalid team ID."})
-        Athlete.objects.create(user_ptr_id=user.id, team=team, **validated_data)
-        return user
+            # Create a dummy User instance for validation, which doesn't hit the DB
+            temp_user = User(username=data.get('username'), email=data.get('email'))
+            validate_password(data['password'], user=temp_user)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError({"password": list(e.messages)})
 
-class MemberRegistrationSerializer(serializers.Serializer):
-    user = UserSerializer()
-    join_date = serializers.DateField(required=False, allow_null=True)
-    profile_picture = serializers.ImageField(required=False, allow_null=True)
+        # Check if username or email already exists
+        if User.objects.filter(username=data['username']).exists():
+            raise serializers.ValidationError({"username": "A user with that username already exists."})
+        if User.objects.filter(email=data['email']).exists():
+            raise serializers.ValidationError({"email": "A user with that email already exists."})
+
+        return data
 
     def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = User.objects.create_user(**user_data)
-        Member.objects.create(user_ptr_id=user.id, **validated_data)
+        # *** FIX START ***
+        # Explicitly remove 'password2' from validated_data before creating the User instance.
+        # Although 'password2' is write_only, sometimes ModelSerializer might still try to
+        # pass it if it's listed in 'fields'. Popping it ensures it's gone.
+        validated_data.pop('password2')
+        # *** FIX END ***
+
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=validated_data['password'],
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', '')
+        )
         return user
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('id', 'username', 'first_name', 'last_name', 'email')
+class UserLoginSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    password = serializers.CharField(write_only=True, required=True)
 
-class AthleteSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Athlete
-        fields = '__all__'
+    def validate(self, data):
+        username = data.get('username')
+        password = data.get('password')
 
-class TrainerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Trainer
-        fields = '__all__'
+        if username and password:
+            user = authenticate(request=self.context.get('request'), username=username, password=password)
+            if not user:
+                raise serializers.ValidationError('Invalid credentials. Please try again.', code='authorization')
+        else:
+            raise serializers.ValidationError('Must include "username" and "password".')
 
-class MemberSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Member
-        fields = '__all__'
+        data['user'] = user
+        return data
 
-class MembershipSerializer(serializers.ModelSerializer):
+class TeamMembershipSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True) # Nested serializer for user details
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+
     class Meta:
-        model = Membership
-        fields = '__all__'
+        model = TeamMembership
+        fields = ['id', 'user', 'role', 'role_display', 'joined_at']
+        read_only_fields = ['joined_at']
 
 class TeamSerializer(serializers.ModelSerializer):
-    trainer = TrainerSerializer(read_only=True) 
+    trainer = UserSerializer(read_only=True) # Display trainer's details
+    memberships = TeamMembershipSerializer(many=True, read_only=True) # Nested for all members
+
     class Meta:
         model = Team
-        fields = '__all__'
+        fields = ['id', 'name', 'description', 'trainer', 'memberships', 'created_at', 'updated_at']
+        read_only_fields = ['trainer', 'created_at', 'updated_at']
 
-class PublicationSerializer(serializers.ModelSerializer):
-    author = TrainerSerializer(read_only=True) # Display trainer details
-    team = TeamSerializer(read_only=True)
+    def create(self, validated_data):
+        # The trainer is the current authenticated user
+        validated_data['trainer'] = self.context['request'].user
+        team = Team.objects.create(**validated_data)
+        # Automatically create trainer membership
+        TeamMembership.objects.create(team=team, user=self.context['request'].user, role=TeamMembership.Role.TRAINER)
+        return team
 
-    class Meta:
-        model = Publication
-        fields = '__all__'
-
-class MemberCommentSerializer(serializers.ModelSerializer):
-    author = MemberSerializer(read_only=True)
-
-    class Meta:
-        model = MemberComment
-        fields = '__all__'
-
-class AthleteCommentSerializer(serializers.ModelSerializer):
-    author = AthleteSerializer(read_only=True)
+class CommentSerializer(serializers.ModelSerializer):
+    author = UserSerializer(read_only=True)
 
     class Meta:
-        model = AthleteComment
-        fields = '__all__'
+        model = Comment
+        fields = ['id', 'post', 'author', 'content', 'created_at', 'updated_at']
+        read_only_fields = ['author', 'created_at', 'updated_at', 'post']
 
-class TrainerCommentSerializer(serializers.ModelSerializer):
-    author = TrainerSerializer(read_only=True)
+    def create(self, validated_data):
+        validated_data['author'] = self.context['request'].user
+        return super().create(validated_data)
+
+class PostSerializer(serializers.ModelSerializer):
+    author = UserSerializer(read_only=True)
+    comments_count = serializers.SerializerMethodField()
+    # FIX: Nested comments for Post detail view
+    comments = CommentSerializer(many=True, read_only=True) # This will include full comment objects
 
     class Meta:
-        model = TrainerComment
-        fields = '__all__'
+        model = Post
+        fields = ['id', 'team', 'author', 'title', 'content', 'created_at', 'updated_at', 'comments_count', 'comments']
+        read_only_fields = ['author', 'created_at', 'updated_at', 'team']
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()
+
+    def create(self, validated_data):
+        validated_data['author'] = self.context['request'].user
+        return super().create(validated_data)
 
 class EventSerializer(serializers.ModelSerializer):
-    created_by = TrainerSerializer(read_only=True)
-    team = TeamSerializer(read_only=True)
+    trainer = UserSerializer(read_only=True)
 
     class Meta:
         model = Event
-        fields = '__all__'
+        fields = ['id', 'team', 'trainer', 'title', 'description', 'start_time', 'end_time', 'location', 'created_at', 'updated_at']
+        read_only_fields = ['trainer', 'created_at', 'updated_at', 'team']
 
-class TrainingSerializer(EventSerializer):
-    attendance = AthleteSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Training
-        fields = '__all__'
-
-class TrainingAttendanceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TrainingAttendance
-        fields = '__all__'
-
-class GameSerializer(EventSerializer):
-    attendance = MemberSerializer(many=True, read_only=True)
-    participants = AthleteSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Game
-        fields = '__all__'
-
-class GameAttendanceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GameAttendance
-        fields = '__all__'
-
-class GameParticipationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GameParticipation
-        fields = '__all__'
-
-        
-    
-    
+    def create(self, validated_data):
+        validated_data['trainer'] = self.context['request'].user
+        return super().create(validated_data)
