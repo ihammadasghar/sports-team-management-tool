@@ -249,7 +249,6 @@ export const createTeamPost = async (dispatch, teamId, postData) => {
 export const fetchEventsFeed = async (dispatch, currentUserId) => {
   dispatch({ type: FETCH_EVENTS_FEED_REQUEST });
   try {
-    // Correctly extract allTeams from the paginated response
     const allTeamsResponse = await api.teams.getAll();
     const allTeams = allTeamsResponse.results
       ? allTeamsResponse.results

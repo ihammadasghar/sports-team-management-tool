@@ -2,7 +2,6 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_nested import routers
 
-# Import your new authentication views
 from .views import (
     UserViewSet, TeamViewSet, PostViewSet, CommentViewSet, EventViewSet,
     UserRegistrationView, UserLoginView, UserLogoutView # Add these

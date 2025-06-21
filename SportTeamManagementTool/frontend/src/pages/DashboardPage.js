@@ -29,7 +29,7 @@ import {
   joinTeam,
 } from "../redux/asyncActions";
 import TeamCard from "../components/TeamCard";
-import PostCard from "../components/PostCard"; // Keep PostCard as it defines individual post appearance
+import PostCard from "../components/PostCard";
 
 const DashboardPage = ({ navigateTo }) => {
   const dispatch = useDispatch();

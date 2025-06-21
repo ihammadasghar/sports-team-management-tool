@@ -9,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name']
-        read_only_fields = ['username', 'email'] # Depending on your user registration flow
+        read_only_fields = ['username', 'email']
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -21,16 +21,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'first_name': {'required': False},
             'last_name': {'required': False},
-            'email': {'required': True}, # Make email required for registration
+            'email': {'required': True},
         }
 
     def validate(self, data):
         if data['password'] != data['password2']:
             raise serializers.ValidationError({"password": "Password fields didn't match."})
 
-        # Validate password strength using Django's validators
         try:
-            # Create a dummy User instance for validation, which doesn't hit the DB
             temp_user = User(username=data.get('username'), email=data.get('email'))
             validate_password(data['password'], user=temp_user)
         except DjangoValidationError as e:
@@ -45,13 +43,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        # *** FIX START ***
-        # Explicitly remove 'password2' from validated_data before creating the User instance.
-        # Although 'password2' is write_only, sometimes ModelSerializer might still try to
-        # pass it if it's listed in 'fields'. Popping it ensures it's gone.
         validated_data.pop('password2')
-        # *** FIX END ***
-
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
@@ -89,8 +81,8 @@ class TeamMembershipSerializer(serializers.ModelSerializer):
         read_only_fields = ['joined_at']
 
 class TeamSerializer(serializers.ModelSerializer):
-    trainer = UserSerializer(read_only=True) # Display trainer's details
-    memberships = TeamMembershipSerializer(many=True, read_only=True) # Nested for all members
+    trainer = UserSerializer(read_only=True)
+    memberships = TeamMembershipSerializer(many=True, read_only=True)
 
     class Meta:
         model = Team
@@ -98,10 +90,8 @@ class TeamSerializer(serializers.ModelSerializer):
         read_only_fields = ['trainer', 'created_at', 'updated_at']
 
     def create(self, validated_data):
-        # The trainer is the current authenticated user
         validated_data['trainer'] = self.context['request'].user
         team = Team.objects.create(**validated_data)
-        # Automatically create trainer membership
         TeamMembership.objects.create(team=team, user=self.context['request'].user, role=TeamMembership.Role.TRAINER)
         return team
 

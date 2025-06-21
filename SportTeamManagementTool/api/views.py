@@ -26,7 +26,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated] # Only authenticated users can view users
+    permission_classes = [IsAuthenticated]
 
 class TeamViewSet(viewsets.ModelViewSet):
     """
@@ -34,35 +34,22 @@ class TeamViewSet(viewsets.ModelViewSet):
     """
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
-    # Removed default permission_classes to handle them dynamically in get_permissions
 
     def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
         if self.action in ['list', 'retrieve']:
-            # For listing all teams or retrieving a single team's details,
-            # any authenticated user should be able to see it, but has_object_permission
-            # of IsTeamMember will ensure only actual members can view specific details.
             permission_classes = [IsAuthenticated, IsTeamMember]
         elif self.action == 'create':
-            # Any authenticated user can create a team (they become the trainer)
             permission_classes = [IsAuthenticated]
         elif self.action in ['update', 'partial_update', 'destroy', 'remove_member', 'transfer_trainer']:
-            # Only the trainer of the team can update/delete the team or manage members
             permission_classes = [IsAuthenticated, IsTrainerOfTeam]
         elif self.action == 'add_member':
-            # Any authenticated user can attempt to join a team
             permission_classes = [IsAuthenticated]
         else:
-            permission_classes = [IsAuthenticated] # Default for other actions
+            permission_classes = [IsAuthenticated]
 
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        # When listing, we don't want to filter by membership here,
-        # as the frontend dashboard needs to see *all* teams to decide which to join.
-        # Object-level permissions will then restrict access to details.
         return Team.objects.all()
 
     def perform_create(self, serializer):
@@ -105,7 +92,7 @@ class TeamViewSet(viewsets.ModelViewSet):
         serializer = TeamMembershipSerializer(membership)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=['delete'], url_path='remove-member') # Permissions handled by get_permissions
+    @action(detail=True, methods=['delete'], url_path='remove-member')
     def remove_member(self, request, pk=None):
         team = self.get_object()
         username = request.data.get('username')
@@ -125,7 +112,7 @@ class TeamViewSet(viewsets.ModelViewSet):
         membership.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['patch'], url_path='transfer-trainer') # Permissions handled by get_permissions
+    @action(detail=True, methods=['patch'], url_path='transfer-trainer')
     def transfer_trainer(self, request, pk=None):
         team = self.get_object()
         new_trainer_username = request.data.get('new_trainer_username')
@@ -192,7 +179,6 @@ class CommentViewSet(viewsets.ModelViewSet):
         post_pk = self.kwargs.get('post_pk')
         if post_pk:
             post = get_object_or_404(Post, pk=post_pk)
-            # Ensure the user is a member of the post's team to see comments
             if not post.team.memberships.filter(user=self.request.user).exists():
                 return Comment.objects.none()
             return Comment.objects.filter(post=post).order_by('created_at')
@@ -211,13 +197,12 @@ class EventViewSet(viewsets.ModelViewSet):
     Events are tied to a specific team.
     """
     serializer_class = EventSerializer
-    permission_classes = [IsAuthenticated, IsTeamMember] # IsTeamMember will check if user is part of the team
+    permission_classes = [IsAuthenticated, IsTeamMember]
 
     def get_queryset(self):
         team_pk = self.kwargs.get('team_pk')
         if team_pk:
             team = get_object_or_404(Team, pk=team_pk)
-            # Ensure the user is a member of this team to see events
             if not team.memberships.filter(user=self.request.user).exists():
                 return Event.objects.none()
             return Event.objects.filter(team=team).order_by('start_time')
@@ -225,20 +210,17 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         team = get_object_or_404(Team, pk=self.kwargs.get('team_pk'))
-        # Only trainers can create events for a team
         if team.trainer != self.request.user:
             raise exceptions.PermissionDenied("Only the trainer can create events for this team.")
         serializer.save(team=team)
 
     def perform_update(self, serializer):
         team = get_object_or_404(Team, pk=self.kwargs.get('team_pk'))
-        # Only trainers can update events for a team
         if team.trainer != self.request.user:
             raise exceptions.PermissionDenied("Only the trainer can update events for this team.")
         serializer.save()
 
     def perform_destroy(self, instance):
-        # Only trainers can delete events for a team
         if instance.team.trainer != self.request.user:
             raise exceptions.PermissionDenied("Only the trainer can delete events for this team.")
         instance.delete()
@@ -266,7 +248,7 @@ class UserLoginView(APIView):
     """
     API endpoint for user login and token generation.
     """
-    permission_classes = [AllowAny] # Allow anyone to log in
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data, context={'request': request})
@@ -285,11 +267,10 @@ class UserLogoutView(APIView):
     """
     API endpoint for user logout (deletes the current user's token).
     """
-    permission_classes = [IsAuthenticated] # Only authenticated users can log out
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # Delete the user's current authentication token
         if hasattr(request.user, 'auth_token'):
             request.user.auth_token.delete()
-        logout(request) # Log out from session if using SessionAuthentication
+        logout(request)
         return Response({"message": "Successfully logged out."}, status=status.HTTP_200_OK)
